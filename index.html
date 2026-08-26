@@ -3,158 +3,476 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Share Contacts</title>
-
+  <title>Ultimate Contact Exporter & Sharer</title>
+  
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 50px 20px;
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --success: #10b981;
+      --google: #ea4335;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-inner: #0f172a;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --border: #334155;
     }
 
-    button {
-      padding: 15px 25px;
-      font-size: 18px;
-      border: 0;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 480px;
+      padding: 24px 20px;
+      border-radius: 24px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+      text-align: center;
+    }
+
+    .header-icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    p.subtitle {
+      color: var(--text-sub);
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    /* Option Cards */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .option-card {
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      padding: 14px;
+      border-radius: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .option-card:hover {
+      border-color: var(--primary);
+    }
+
+    .option-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .option-title {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-fast { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-cloud { background: rgba(234, 67, 53, 0.2); color: #f87171; }
+
+    .option-desc {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    button, .btn-link {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
       border-radius: 10px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
     }
 
-    #status {
-      margin-top: 20px;
+    .btn-intent {
+      background: #3b82f6;
+      color: white;
     }
+    .btn-intent:hover { background: #2563eb; }
+
+    .btn-upload {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-upload:hover { background: var(--primary-hover); }
+
+    .btn-google {
+      background: #202124;
+      color: #e8eaed;
+      border: 1px solid #5f6368;
+    }
+    .btn-google:hover { background: #303134; }
+
+    .btn-picker {
+      background: transparent;
+      color: var(--text-sub);
+      border: 1px dashed var(--border);
+    }
+    .btn-picker:hover { color: #fff; border-color: #94a3b8; }
+
+    .btn-success { background: var(--success); color: white; }
+    .btn-secondary { background: transparent; color: var(--text-main); border: 1px solid var(--border); }
+
+    /* Preview section */
+    .preview-box {
+      margin-top: 20px;
+      text-align: left;
+      display: none;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .contact-list {
+      max-height: 180px;
+      overflow-y: auto;
+      background: var(--card-inner);
+      border-radius: 10px;
+      padding: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .contact-item {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .contact-item:last-child { border-bottom: none; }
+    .contact-name { font-weight: 600; font-size: 13px; }
+    .contact-info { font-size: 11px; color: var(--text-sub); }
+
+    #toast {
+      margin-top: 14px;
+      font-size: 13px;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+    }
+    .toast-info { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+    .toast-error { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .toast-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
   </style>
 </head>
 
 <body>
 
-  <h2>Contacts Share</h2>
+  <div class="container">
+    <div class="header-icon">📇</div>
+    <h2>Contact Manager</h2>
+    <p class="subtitle">সব কন্টাক্ট একসাথে এক্সপোর্ট ও শেয়ার করুন</p>
 
-  <p>
-    নিচের বাটনে চাপ দিয়ে প্রয়োজনীয় Contacts নির্বাচন করুন।
-  </p>
+    <!-- Hidden Input for VCF File -->
+    <input type="file" id="vcfFileInput" accept=".vcf,text/vcard" style="display: none;">
 
-  <button id="shareBtn">
-    📱 Share Contacts
-  </button>
+    <div class="options-grid">
 
-  <div id="status"></div>
+      <!-- অপশন ১: ফোনের আসল Contacts অ্যাপ খোলা (Intent) -->
+      <div class="option-card">
+        <div class="option-header">
+          <span class="option-title">📲 ফোনের Contacts অ্যাপ ওপেন করুন</span>
+          <span class="badge badge-fast">১ ক্লিক</span>
+        </div>
+        <p class="option-desc">ফোনের অ্যাপ খুলে সরাসরি 'Export to .vcf' বা 'Share All' ডায়ালগে যেতে নিচের বাটনে চাপুন।</p>
+        <a href="intent:#Intent;action=android.intent.action.VIEW;type=vnd.android.cursor.dir/contact;end" class="btn-link btn-intent">
+          🚀 Contacts অ্যাপ ওপেন করুন
+        </a>
+      </div>
+
+      <!-- অপশন ২: VCF ফাইল ইম্পোর্ট ও শেয়ার -->
+      <div class="option-card">
+        <div class="option-header">
+          <span class="option-title">📂 VCF ফাইল আপলোড ও শেয়ার</span>
+        </div>
+        <p class="option-desc">এক্সপোর্ট করা .vcf ফাইলটি সিলেক্ট করলে সবগুলো কন্টাক্ট সরাসরি টেলিগ্রাম/হোয়াটসঅ্যাপে শেয়ার করতে পারবেন।</p>
+        <button id="uploadVcfBtn" class="btn-upload">
+          📁 .vcf ফাইল সিলেক্ট করুন
+        </button>
+      </div>
+
+      <!-- অপশন ৩: Google Contacts API -->
+      <div class="option-card">
+        <div class="option-header">
+          <span class="option-title">☁️ Google Contacts Sync</span>
+          <span class="badge badge-cloud">Gmail</span>
+        </div>
+        <p class="option-desc">ফোনের জিমেইল অ্যাকাউন্টে সেভ থাকা সব কন্টাক্ট ক্লাউড থেকে সরাসরি লোড করুন।</p>
+        <button id="googleSyncBtn" class="btn-google">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.2 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15s.7 5.3 1.9 7.7l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.2-6.4-5.2L1.9 16c1.8 3.7 5.6 7 10.1 7z"/></svg>
+          Google Account দিয়ে লোড করুন
+        </button>
+      </div>
+
+      <!-- অপশন ৪: ব্রাউজার Contact Picker (Manual) -->
+      <button id="pickBtn" class="btn-picker">
+        🔍 কিছু নির্দিষ্ট কন্টাক্ট বেছে নিন (Browser Picker)
+      </button>
+    </div>
+
+    <!-- Contact Preview & Action Sheet -->
+    <div id="previewBox" class="preview-box">
+      <div class="preview-header">
+        <span>লোড হওয়া কন্টাক্ট তালিকা</span>
+        <span id="contactCount" class="badge badge-fast">0 টি</span>
+      </div>
+      <div id="contactList" class="contact-list"></div>
+
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button id="shareBtn" class="btn-success">📤 Share All</button>
+        <button id="downloadBtn" class="btn-secondary">💾 Download</button>
+      </div>
+    </div>
+
+    <div id="toast"></div>
+  </div>
 
 <script>
-const button = document.getElementById("shareBtn");
-const status = document.getElementById("status");
+  let contactsData = [];
 
-button.addEventListener("click", async () => {
+  const uploadVcfBtn = document.getElementById("uploadVcfBtn");
+  const vcfFileInput = document.getElementById("vcfFileInput");
+  const pickBtn = document.getElementById("pickBtn");
+  const googleSyncBtn = document.getElementById("googleSyncBtn");
+  const shareBtn = document.getElementById("shareBtn");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const previewBox = document.getElementById("previewBox");
+  const contactList = document.getElementById("contactList");
+  const contactCount = document.getElementById("contactCount");
+  const toast = document.getElementById("toast");
 
-  try {
+  function showToast(msg, type = "info") {
+    toast.className = `toast-${type}`;
+    toast.textContent = msg;
+    toast.style.display = "block";
+  }
 
-    // Contact Picker API আছে কিনা পরীক্ষা
-    if (!("contacts" in navigator)) {
-      status.textContent =
-        "এই browser-এ Contact Picker সমর্থিত নয়। Android Chrome দিয়ে চেষ্টা করুন।";
-      return;
+  // --- ১. VCF File Import Handler ---
+  uploadVcfBtn.addEventListener("click", () => vcfFileInput.click());
+
+  vcfFileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    showToast("VCF ফাইল প্রসেস হচ্ছে...", "info");
+    try {
+      const text = await file.text();
+      contactsData = parseVCardText(text);
+
+      if (contactsData.length === 0) {
+        showToast("ফাইলে কোনো বৈধ কন্টাক্ট পাওয়া যায়নি!", "error");
+        return;
+      }
+
+      renderPreview(contactsData);
+      showToast(`${contactsData.length} টি কন্টাক্ট সফলভাবে লোড হয়েছে!`, "success");
+    } catch (err) {
+      showToast("ফাইল পড়তে সমস্যা হয়েছে।", "error");
     }
+  });
 
-    // কোন তথ্য চাই
-    const properties = ["name", "tel"];
+  // Client-side VCF Parser (Regex Fast Engine)
+  function parseVCardText(vcfText) {
+    const unfolded = vcfText.replace(/\r\n[ \t]/g, "").replace(/\n[ \t]/g, "");
+    const vcards = unfolded.split(/BEGIN:VCARD/i).filter(Boolean);
+    const parsed = [];
 
-    const options = {
-      multiple: true
-    };
+    vcards.forEach((card) => {
+      let name = "No Name";
+      const phones = [];
+      const emails = [];
 
-    // User-এর সামনে Contact Picker খুলবে
-    const contacts = await navigator.contacts.select(
-      properties,
-      options
-    );
-
-    if (!contacts || contacts.length === 0) {
-      status.textContent = "কোনো Contact নির্বাচন করা হয়নি।";
-      return;
-    }
-
-    // vCard তৈরি
-    let vcf = "";
-
-    contacts.forEach((contact, index) => {
-
-      const name =
-        contact.name?.[0] || `Contact ${index + 1}`;
-
-      const phones =
-        contact.tel || [];
-
-      vcf += "BEGIN:VCARD\r\n";
-      vcf += "VERSION:3.0\r\n";
-      vcf += `FN:${escapeVCF(name)}\r\n`;
-
-      phones.forEach(phone => {
-        vcf += `TEL;TYPE=CELL:${escapeVCF(phone)}\r\n`;
+      const lines = card.split(/\r\n|\r|\n/);
+      lines.forEach(line => {
+        if (line.startsWith("FN:") || line.startsWith("FN;")) {
+          name = line.split(":").slice(1).join(":").trim();
+        } else if (line.startsWith("N:") && name === "No Name") {
+          const parts = line.split(":").slice(1).join(":").split(";");
+          name = parts.filter(Boolean).join(" ").trim() || "No Name";
+        } else if (line.startsWith("TEL")) {
+          const num = line.split(":").slice(1).join(":").trim();
+          if (num) phones.push(num);
+        } else if (line.startsWith("EMAIL")) {
+          const email = line.split(":").slice(1).join(":").trim();
+          if (email) emails.push(email);
+        }
       });
 
-      vcf += "END:VCARD\r\n";
+      if (name !== "No Name" || phones.length > 0) {
+        parsed.push({ name: [name], tel: phones, email: emails });
+      }
     });
 
-    // vCard file তৈরি
-    const file = new File(
-      [vcf],
-      "contacts.vcf",
-      {
-        type: "text/vcard"
+    return parsed;
+  }
+
+  // --- ২. Google Contacts Sync (Demo / OAuth Setup) ---
+  googleSyncBtn.addEventListener("click", () => {
+    showToast("Google OAuth সেটআপের জন্য Client ID প্রয়োজন। ডেমো হিসেবে ৩টি ডামি কন্টাক্ট যোগ করা হলো।", "info");
+    
+    // ডেমো ডাটা (প্রোডাকশনে Google People API ব্যবহার করতে হবে)
+    contactsData = [
+      { name: ["Md Utsob Khan (Gmail)"], tel: ["+8801700000001"], email: ["mdutsobkhan851@gmail.com"] },
+      { name: ["Mutshob Ali (Gmail)"], tel: ["+8801800000002"], email: ["mutshobali@gmail.com"] },
+      { name: ["Polok Md (Gmail)"], tel: ["+8801900000003"], email: ["polokmd851@gmail.com"] }
+    ];
+
+    renderPreview(contactsData);
+  });
+
+  // --- ৩. Browser Contact Picker ---
+  pickBtn.addEventListener("click", async () => {
+    try {
+      if (!("contacts" in navigator && "select" in navigator.contacts)) {
+        showToast("এই ব্রাউজারে Contact Picker নেই। VCF ফাইল ব্যবহার করুন।", "error");
+        return;
       }
-    );
+      const supported = await navigator.contacts.getProperties();
+      const props = ["name", "tel", "email"].filter(p => supported.includes(p));
 
-    // Android Share Sheet
-    if (
-      navigator.share &&
-      navigator.canShare &&
-      navigator.canShare({ files: [file] })
-    ) {
+      contactsData = await navigator.contacts.select(props, { multiple: true });
+      if (contactsData.length > 0) {
+        renderPreview(contactsData);
+        showToast(`${contactsData.length} টি কন্টাক্ট লোড হয়েছে!`, "success");
+      }
+    } catch (err) {
+      if (err.name !== "AbortError") showToast("কন্টাক্ট আনা সম্ভব হয়নি।", "error");
+    }
+  });
 
-      await navigator.share({
-        title: "Contacts",
-        text: "Selected contacts",
-        files: [file]
-      });
+  // Preview UI
+  function renderPreview(contacts) {
+    contactList.innerHTML = "";
+    contactCount.textContent = `${contacts.length} টি`;
 
-      status.textContent =
-        "Share menu খোলা হয়েছে। Telegram নির্বাচন করুন।";
+    const displayLimit = 40;
+    contacts.slice(0, displayLimit).forEach((c, idx) => {
+      const name = c.name?.[0] || `Contact ${idx + 1}`;
+      const phones = c.tel?.join(", ") || "No phone";
+      const item = document.createElement("div");
+      item.className = "contact-item";
+      item.innerHTML = `
+        <div class="contact-name">${name}</div>
+        <div class="contact-info">${phones}</div>
+      `;
+      contactList.appendChild(item);
+    });
 
-    } else {
-
-      // Share API না থাকলে download
-      const url = URL.createObjectURL(file);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "contacts.vcf";
-
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-
-      URL.revokeObjectURL(url);
-
-      status.textContent =
-        "contacts.vcf তৈরি হয়েছে। এখন ফাইলটি Telegram-এ Share করুন।";
+    if (contacts.length > displayLimit) {
+      const more = document.createElement("div");
+      more.style.cssText = "text-align:center; padding:6px; font-size:11px; color:var(--text-sub);";
+      more.textContent = `...এবং আরও ${contacts.length - displayLimit} টি কন্টাক্ট`;
+      contactList.appendChild(more);
     }
 
-  } catch (error) {
-
-    console.error(error);
-
-    status.textContent =
-      "Operation বাতিল হয়েছে অথবা browser এটি সমর্থন করছে না।";
+    previewBox.style.display = "block";
+    previewBox.scrollIntoView({ behavior: 'smooth' });
   }
-});
 
-function escapeVCF(value) {
-  return String(value)
-    .replace(/\\/g, "\\\\")
-    .replace(/;/g, "\\;")
-    .replace(/,/g, "\\,")
-    .replace(/\n/g, "\\n");
-}
+  // Create VCF
+  function generateVCard(contacts) {
+    let vcf = "";
+    contacts.forEach((c, idx) => {
+      const name = c.name?.[0] || `Contact ${idx + 1}`;
+      vcf += "BEGIN:VCARD\r\nVERSION:3.0\r\n";
+      vcf += `FN;CHARSET=UTF-8:${escapeVCF(name)}\r\n`;
+      (c.tel || []).forEach(p => vcf += `TEL;TYPE=CELL:${escapeVCF(p)}\r\n`);
+      (c.email || []).forEach(e => vcf += `EMAIL;TYPE=INTERNET:${escapeVCF(e)}\r\n`);
+      vcf += "END:VCARD\r\n";
+    });
+    return new File([vcf], "contacts_backup.vcf", { type: "text/vcard;charset=utf-8" });
+  }
+
+  // Share Action
+  shareBtn.addEventListener("click", async () => {
+    if (!contactsData.length) return;
+    const file = generateVCard(contactsData);
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          title: "Contacts Export",
+          text: `মোট ${contactsData.length} টি কন্টাক্ট।`,
+          files: [file]
+        });
+      } catch (err) {}
+    } else {
+      triggerDownload(file);
+    }
+  });
+
+  // Download Action
+  downloadBtn.addEventListener("click", () => {
+    if (!contactsData.length) return;
+    triggerDownload(generateVCard(contactsData));
+  });
+
+  function triggerDownload(file) {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `contacts_${Date.now()}.vcf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast("VCF ফাইল ডাউনলোড হয়েছে!", "success");
+  }
+
+  function escapeVCF(v) {
+    return String(v).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  }
 </script>
 
 </body>
