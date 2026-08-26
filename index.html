@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Share Contacts</title>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 50px 20px;
+    }
+
+    button {
+      padding: 15px 25px;
+      font-size: 18px;
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    #status {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>Contacts Share</h2>
+
+  <p>
+    নিচের বাটনে চাপ দিয়ে প্রয়োজনীয় Contacts নির্বাচন করুন।
+  </p>
+
+  <button id="shareBtn">
+    📱 Share Contacts
+  </button>
+
+  <div id="status"></div>
+
+<script>
+const button = document.getElementById("shareBtn");
+const status = document.getElementById("status");
+
+button.addEventListener("click", async () => {
+
+  try {
+
+    // Contact Picker API আছে কিনা পরীক্ষা
+    if (!("contacts" in navigator)) {
+      status.textContent =
+        "এই browser-এ Contact Picker সমর্থিত নয়। Android Chrome দিয়ে চেষ্টা করুন।";
+      return;
+    }
+
+    // কোন তথ্য চাই
+    const properties = ["name", "tel"];
+
+    const options = {
+      multiple: true
+    };
+
+    // User-এর সামনে Contact Picker খুলবে
+    const contacts = await navigator.contacts.select(
+      properties,
+      options
+    );
+
+    if (!contacts || contacts.length === 0) {
+      status.textContent = "কোনো Contact নির্বাচন করা হয়নি।";
+      return;
+    }
+
+    // vCard তৈরি
+    let vcf = "";
+
+    contacts.forEach((contact, index) => {
+
+      const name =
+        contact.name?.[0] || `Contact ${index + 1}`;
+
+      const phones =
+        contact.tel || [];
+
+      vcf += "BEGIN:VCARD\r\n";
+      vcf += "VERSION:3.0\r\n";
+      vcf += `FN:${escapeVCF(name)}\r\n`;
+
+      phones.forEach(phone => {
+        vcf += `TEL;TYPE=CELL:${escapeVCF(phone)}\r\n`;
+      });
+
+      vcf += "END:VCARD\r\n";
+    });
+
+    // vCard file তৈরি
+    const file = new File(
+      [vcf],
+      "contacts.vcf",
+      {
+        type: "text/vcard"
+      }
+    );
+
+    // Android Share Sheet
+    if (
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({ files: [file] })
+    ) {
+
+      await navigator.share({
+        title: "Contacts",
+        text: "Selected contacts",
+        files: [file]
+      });
+
+      status.textContent =
+        "Share menu খোলা হয়েছে। Telegram নির্বাচন করুন।";
+
+    } else {
+
+      // Share API না থাকলে download
+      const url = URL.createObjectURL(file);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "contacts.vcf";
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+
+      status.textContent =
+        "contacts.vcf তৈরি হয়েছে। এখন ফাইলটি Telegram-এ Share করুন।";
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    status.textContent =
+      "Operation বাতিল হয়েছে অথবা browser এটি সমর্থন করছে না।";
+  }
+});
+
+function escapeVCF(value) {
+  return String(value)
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\n/g, "\\n");
+}
+</script>
+
+</body>
+</html>
